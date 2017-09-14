@@ -20,15 +20,27 @@ Module SimpleType.ml(i)
   unification and also schema (generalisation and instanciation).
   Schema uses bindlib's multiple binders.
 
-Module SimpleTerm.ml(i) (WORK IN PROGRESS)
+Module SimpleTerm.ml(i)
 
   Simply typed lambda-terms as a function taking two modules:
   - A module for type (intended to be produced by Type.Make)
   - A module for a signature of constants to extend your terms
 
-File Test.ml (WORK IN PROGRESS)
+File Test.ml
 
   some tests ...
+
+File Minimal.ml
+
+  the minimal usage, with no atomic types, no constants.
+  In implements an interactive loops with exception handling,
+  and three commands:
+
+    def lid = term ;
+    whnf term ;
+    test term = term ;
+
+  see file.txt for an example.
 
 -------
 INSTALL

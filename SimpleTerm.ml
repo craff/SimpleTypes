@@ -52,6 +52,9 @@ module type Term = sig
 
   val parse : t Earley.grammar
 
+  (** We export the grammar for identifiers *)
+  val lid : string Earley.grammar
+
   (** weak head normal form *)
   val whnf : t -> t
 
@@ -126,11 +129,14 @@ module Make(S:Signature) = struct
            Type.unif t typ
         | Var _ -> assert false
     in
+    Printf.eprintf "===> %b\n%!" (ty <> None);
     let ty = match ty with
       | None -> new_type ()
       | Some ty -> ty
     in
+    Format.eprintf "===> %a\n%!" Type.print ty;
     fn term ty;
+    Format.eprintf "===> %a\n%!" Type.print ty;
     Type.generalise ty
 
   (** Priority levels for printing and parsing *)
@@ -179,7 +185,9 @@ module Make(S:Signature) = struct
       Hashtbl.add global_defs name def;
       def
 
-  let parser lid = ''[a-z][a-zA-Z0-9_']*''
+  let parser lid =
+    s:''[a-z][a-zA-Z0-9_']*'' -> if s = "fun" then Earley.give_up (); s
+
   let parser parse lvl =
     | c : S.parse
          when lvl = LvlAtom -> (fun env -> box (Cst c))

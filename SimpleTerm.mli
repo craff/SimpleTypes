@@ -70,6 +70,9 @@ module type Term = sig
 
   val parse : t Earley.grammar
 
+  (** We export the grammar for identifiers *)
+  val lid : string Earley.grammar
+
   (** weak head normal form *)
   val whnf : t -> t
 

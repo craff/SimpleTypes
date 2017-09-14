@@ -1,7 +1,8 @@
 type mark = Above | Adone | NotSeen
 
+(* age: too keep the oldest ... most significant name *)
 type 'a t =
-  { name : string; mutable value : 'a link; mutable mark : mark }
+  { name : string; mutable value : 'a link; mutable mark : mark; age : int }
 
  and 'a link =
    | Leaf
@@ -12,9 +13,12 @@ type 'a value =
   | Unknown of string
   | Known of 'a
 
-let make_valued v = { name = ""; value = Final v; mark = NotSeen }
+let make_valued v = { name = ""; value = Final v; mark = NotSeen; age = 0 }
 
-let make_free name = { name; value = Leaf; mark = NotSeen }
+let age_count = ref 0
+
+let make_free name =
+  incr age_count; { name; value = Leaf; mark = NotSeen; age = !age_count }
 
 let rec find : 'a t -> 'a t * 'a value = fun c ->
   match c.value with
@@ -35,8 +39,13 @@ let rec union : type a.a t -> a t -> (a -> a -> unit) -> unit =
            c1.value <- Link c2; merge a1 a2
         | (Known a1, Unknown _) ->
            c2.value <- Link c1
-        | _ ->
+        | (Unknown _, Known a2) ->
            c1.value <- Link c2
+        | (Unknown _, Unknown _) ->
+           if c1.age < c2.age then
+             c2.value <- Link c1
+           else
+             c1.value <- Link c2
       end
 
 let traverse fn =

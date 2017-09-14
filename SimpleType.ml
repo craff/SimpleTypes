@@ -101,10 +101,25 @@ module Make(A:Atom) = struct
       in
       traverse gn
 
+  (** A table for unknown variables, reset at each comple parsing,
+      so we can parse ?A -> ?A and have twice the same var *)
+
+  let new_free_var, reset_free_vars =
+    let tbl = Hashtbl.create 101 in
+    (fun name ->
+      try Hashtbl.find tbl name
+      with Not_found ->
+           let res = make_free name in
+           Hashtbl.add tbl name res;
+           res),
+    (fun () -> Hashtbl.clear tbl)
+
   (** parser for types, with the same priority *)
   let parser parse lvl =
     | a:A.parse
          when lvl = LvlAtom -> atom a
+    | '?' name:''[A-Za-z][A-Za-z0-9_']*''
+         when lvl = LvlAtom -> new_free_var name;
     | t1:(parse LvlAtom) "->" t2:(parse LvlFunc)
          when lvl = LvlFunc ->
          func t1 t2
@@ -112,7 +127,8 @@ module Make(A:Atom) = struct
          when lvl = LvlAtom -> t
     | t:(parse LvlAtom) when lvl = LvlFunc -> t
 
-  let parse = parse LvlFunc
+  let parse =
+    parser { t:(parse LvlFunc) -> reset_free_vars (); t }
 
   (** We use bindlib module to define schema *)
   open Bindlib

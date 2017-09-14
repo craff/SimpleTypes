@@ -17,7 +17,7 @@ module type Term = sig
   type term =
     | Cst of S.cst
     | Lam of (term, term) binder
-    | App of (term * term)
+    | App of term * term
     | Def of definition
 
     | Var of term var (** for printing only *)
@@ -50,7 +50,7 @@ module Make(S:Signature) = struct
   type term =
     | Cst of S.cst
     | Lam of (term, term) binder
-    | App of (term * term)
+    | App of term * term
     | Def of definition
 
     | Var of term var (** for printing only *)

@@ -1,0 +1,8 @@
+def idt = fun x -> x;
+whnf idt idt;
+test idt idt = idt ;
+def z = fun f x -> x;
+def s1 = fun n f x -> f (n f x);
+def s2 : ((?A -> ?A) -> (?A -> ?A)) -> ((?A -> ?A) -> (?A -> ?A))
+  = fun n f x -> n f (f x);
+test (s1 (s1 z)) = (s2 (s2 z));

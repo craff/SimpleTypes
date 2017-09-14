@@ -1,65 +1,78 @@
 open SimpleType
 open Bindlib
 
-(** Module type for a signature for the simply typed lambda calculus.
-    That is a type of all constants their types *)
+(** Module type for a signature for the constants you want to
+    use in your simply typed lambda-calculus. *)
 module type Signature =
   sig
+    (** We include a type module to have access to the type
+        of simple type *)
     module Type:Type
+    (** This is the type of the constants *)
     type t
+    (** The equality, printing and parsing *)
     val eq : t -> t -> bool
     val print : Format.formatter -> t -> unit
     val parse : t Earley.grammar
+    (** The function returning the type of a constant *)
     val typeOf : t -> Type.t
   end
 
+(** Signature of simple terms *)
 module type Term = sig
+  (** We need to module for the signature and the types to write
+      the type below *)
   module S:Signature
   module Type:Type
 
-  type term =
+  (* The type of terms *)
+  type t =
     | Cst of S.t
-    | Lam of (term, term) binder
-    | App of term * term
+    | Lam of (t, t) binder
+    | App of t * t
     | Def of definition
 
-    | Var of term var (** for printing only *)
+    | Var of t var (** for printing only *)
     | Typ of Type.t   (** for typing only *)
   and definition =
     { name : string
     ; schema : Type.schema
-    ; value : term }
-  type t = term
+    ; value : t }
 
   (** Smart constructor for bindlibs *)
-  val var : term var -> term
+  val var : t var -> t
 
-  val lam : string -> (term bindbox -> term bindbox) -> term bindbox
+  val lam : string -> (t bindbox -> t bindbox) -> t bindbox
 
-  val app : term bindbox -> term bindbox -> term bindbox
+  val app : t bindbox -> t bindbox -> t bindbox
 
-  val def : definition -> term bindbox
+  val def : definition -> t bindbox
 
   (** type inferrence, of checking if the optional
       argument is given *)
-  val infer : ?ty:Type.t -> term -> Type.schema
+  val infer : ?ty:Type.t -> t -> Type.schema
 
   (** infer and instanciate *)
-  val typeOf : term -> Type.t
+  val typeOf : t -> Type.t
 
   (** Printing and parsing *)
-  val print : Format.formatter -> term -> unit
+  val print : Format.formatter -> t -> unit
 
-  val parse : term Earley.grammar
+  val parse : t Earley.grammar
 
   (** weak head normal form *)
-  val whnf : term -> term
+  val whnf : t -> t
 
   (** convertibility test *)
-  val eq : term -> term -> bool
+  val eq : t -> t -> bool
 
-  (** Adding a definition, possibly with a type *)
-  val add_def : term -> ?ty:Type.t -> string -> unit
+  (** Adding a definition, possibly with a type. The term is
+      type-checked and the definition is added to a global table used
+      by parsing. *)
+  val add_def : t -> ?ty:Type.t -> string -> definition
+
+  (** Printing of definitions *)
+  val print_def : Format.formatter -> definition -> unit
 end
 
 module Make(S:Signature) : Term with module S = S and module Type = S.Type

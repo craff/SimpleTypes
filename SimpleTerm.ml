@@ -15,86 +15,86 @@ module type Term = sig
   module S:Signature
   module Type:Type
 
-  type term =
+  type t =
     | Cst of S.t
-    | Lam of (term, term) binder
-    | App of term * term
+    | Lam of (t, t) binder
+    | App of t * t
     | Def of definition
 
-    | Var of term var (** for printing and convertibility only *)
+    | Var of t var (** for printing and convertibility only *)
     | Typ of Type.t   (** for typing only *)
   and definition =
     { name : string
     ; schema : Type.schema
-    ; value : term }
-
-  type t = term
+    ; value : t }
 
   (** Smart constructor for bindlibs *)
-  val var : term var -> term
+  val var : t var -> t
 
-  val lam : string -> (term bindbox -> term bindbox) -> term bindbox
+  val lam : string -> (t bindbox -> t bindbox) -> t bindbox
 
-  val app : term bindbox -> term bindbox -> term bindbox
+  val app : t bindbox -> t bindbox -> t bindbox
 
-  val def : definition -> term bindbox
+  val def : definition -> t bindbox
 
   (** type inferrence, of checking if the optional
       argument is given *)
-  val infer : ?ty:Type.t -> term -> Type.schema
+  val infer : ?ty:Type.t -> t -> Type.schema
 
   (** infer and instanciate *)
-  val typeOf : term -> Type.t
+  val typeOf : t -> Type.t
 
   (** Printing and parsing *)
-  val print : Format.formatter -> term -> unit
+  val print : Format.formatter -> t -> unit
 
-  val parse : term Earley.grammar
+  val parse : t Earley.grammar
 
   (** weak head normal form *)
-  val whnf : term -> term
+  val whnf : t -> t
 
   (** convertibility test *)
-  val eq : term -> term -> bool
+  val eq : t -> t -> bool
 
   (** Adding a definition, possibly with a type *)
-  val add_def : term -> ?ty:Type.t -> string -> unit
+  val add_def : t -> ?ty:Type.t -> string -> definition
+
+  (** Printing of definitions *)
+  val print_def : Format.formatter -> definition -> unit
 end
 
 module Make(S:Signature) = struct
   module S = S
   module Type = S.Type
 
-  type term =
+  type t =
     | Cst of S.t
-    | Lam of (term, term) binder
-    | App of term * term
+    | Lam of (t, t) binder
+    | App of t * t
     | Def of definition
 
-    | Var of term var (** for printing only *)
+    | Var of t var (** for printing only *)
     | Typ of Type.t   (** for typing only *)
   and definition =
     { name : string
     ; schema : Type.schema
-    ; value : term }
+    ; value : t }
 
-  type t = term
-
-  let var : term var -> term =
+  (** Constructor for the type of terms *)
+  let var : t var -> t =
     fun v -> Var v
 
-  let lam : string -> (term bindbox -> term bindbox) -> term bindbox =
+  let lam : string -> (t bindbox -> t bindbox) -> t bindbox =
     fun name f ->
       box_apply (fun f -> Lam f) (bind var name f)
 
-  let app : term bindbox -> term bindbox -> term bindbox =
+  let app : t bindbox -> t bindbox -> t bindbox =
     box_apply2 (fun t1 t2 -> App(t1,t2))
 
-  let def : definition -> term bindbox =
+  let def : definition -> t bindbox =
     fun d -> box (Def d)
 
-  let infer : ?ty:Type.t -> term -> Type.schema = fun ?ty term ->
-    let open Type in
+  (** Type inference (or type checking if the optionnal argument is given *)
+  let infer : ?ty:Type.t -> t -> Type.schema = fun ?ty term ->
     let gen_var =
       let count = ref 0 in
       (fun () ->
@@ -102,25 +102,25 @@ module Make(S:Signature) = struct
         count := c + 1;
         string_of_int c)
     in
-    let new_type () = mkvar (gen_var ()) in
-    let rec fn : term -> Type.t -> unit =
+    let new_type () = Type.mkvar (gen_var ()) in
+    let rec fn : t -> Type.t -> unit =
       fun term typ ->
         match term with
-        | Cst c -> unif (S.typeOf c) typ
+        | Cst c -> Type.unif (S.typeOf c) typ
         | Lam f ->
            let ty_arg = new_type () in
            let ty_res = new_type () in
            let (_, t1) = unbind (fun _ -> Typ ty_arg) f in
-           unif typ (func ty_arg ty_res);
+           Type.unif typ (Type.func ty_arg ty_res);
            fn t1 ty_res
-        | Typ t -> unif t typ
+        | Typ t -> Type.unif t typ
         | App(t1,t2) ->
            let ty_arg = new_type () in
-           fn t1 (func ty_arg typ);
+           fn t1 (Type.func ty_arg typ);
            fn t2 ty_arg
         | Def d ->
-           let t = instanciate d.schema in
-           unif t typ
+           let t = Type.instanciate d.schema in
+           Type.unif t typ
         | Var _ -> assert false
     in
     let ty = match ty with
@@ -128,10 +128,12 @@ module Make(S:Signature) = struct
       | Some ty -> ty
     in
     fn term ty;
-    generalise ty
+    Type.generalise ty
 
+  (** Priority levels for printing and parsing *)
   type lvl = LvlAtom | LvlApp | LvlLam
 
+  (** Printing *)
   let rec print_ids ff = function
     | [] -> ()
     | [v] -> Format.fprintf ff "%s" (name_of v)
@@ -161,15 +163,18 @@ module Make(S:Signature) = struct
 
   let print = print LvlLam
 
+  (** Exception raised by parsing when an unbound variable is encounterd *)
   exception Unbound of string
   let unbound v = raise (Unbound v)
 
-  let global_defs = Hashtbl.create 101
+  let global_defs : (string, definition) Hashtbl.t = Hashtbl.create 101
 
-  let add_def term ?ty name =
-    let schema = infer ?ty term in
-    let def = { name; value = term; schema } in
-    Hashtbl.add global_defs name def
+  let add_def : t -> ?ty:Type.t -> string -> definition =
+    fun term ?ty name ->
+      let schema = infer ?ty term in
+      let def = { name; value = term; schema } in
+      Hashtbl.add global_defs name def;
+      def
 
   let parser lid = ''[a-z][a-zA-Z0-9_']*''
   let parser parse lvl =
@@ -187,7 +192,7 @@ module Make(S:Signature) = struct
        List.fold_right (fun v t env ->
            lam v (fun x -> let env = (v,x)::env in t env)) ids t
 
-    | t:(parse LvlAtom) u:(parse LvlApp)
+    | t:(parse LvlApp) u:(parse LvlAtom)
         when lvl = LvlApp ->
              (fun env -> app (t env) (u env))
 
@@ -197,9 +202,9 @@ module Make(S:Signature) = struct
     | t:(parse LvlAtom) when lvl = LvlApp -> t
     | t:(parse LvlApp) when lvl = LvlLam -> t
 
-  let parse = parser t:(parse LvlLam) -> unbox (t [])
+  let parse : t Earley.grammar = parser t:(parse LvlLam) -> unbox (t [])
 
-  let rec whnf : term -> term =
+  let rec whnf : t -> t =
     fun t ->
       match t with
       | App(u,v) | Def { value = App(u,v) } ->
@@ -211,7 +216,7 @@ module Make(S:Signature) = struct
          end
       | _ -> t
 
-  let rec eq : term -> term -> bool =
+  let rec eq : t -> t -> bool =
     fun t1 t2 ->
       if t1 == t2 then true else
         (* use fn when we know terms are in whnf *)
@@ -232,5 +237,9 @@ module Make(S:Signature) = struct
 
   let typeOf t = Type.instanciate (infer t)
 
+  let print_def : Format.formatter -> definition -> unit =
+    fun ff def ->
+      Format.fprintf ff "%s = %a : %a" def.name
+                     print def.value Type.print_schema def.schema
 
 end

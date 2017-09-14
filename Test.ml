@@ -33,19 +33,22 @@ end
 module Term = SimpleTerm.Make(Sig)
 
 let blank = Earley.blank_regexp ''[ \t\n\r]*''
+
 let test =
-  let idt = Earley.parse_string Term.parse blank "fun x -> x" in
-  let ty = Term.infer idt in
-  Format.printf "%a : %a\n" Term.print idt Type.print_schema ty;
-  let succ = Earley.parse_string Term.parse blank "fun n f x -> f (n f x)" in
-  let ty = Term.infer succ in
-  Format.printf "%a : %a\n" Term.print succ Type.print_schema ty;
-  let trois = Earley.parse_string Term.parse blank "fun f x -> f (f (f x))" in
-  let ty = Term.infer trois in
-  Format.printf "%a : %a\n" Term.print trois Type.print_schema ty;
-  let neuf = Term.App(trois, trois) in
-  let ty = Term.infer neuf in
-  Format.printf "%a : %a\n" Term.print neuf Type.print_schema ty;
-  let trois' = Earley.parse_string Term.parse blank "S (S (S 0))" in
-  let ty = Term.infer trois' in
-  Format.printf "%a : %a\n" Term.print trois' Type.print_schema ty
+  let idt_t = Earley.parse_string Term.parse blank "fun x -> x" in
+  let idt = Term.add_def idt_t "idt" in
+  Format.printf "%a\n" Term.print_def idt;
+  let succ_t = Earley.parse_string Term.parse blank "fun n f x -> f (n f x)" in
+  let succ = Term.add_def succ_t "succ" in
+  Format.printf "%a\n" Term.print_def succ;
+  let trois_t = Earley.parse_string Term.parse blank
+                                  "succ (succ (succ (fun f x -> x)))"
+  in
+  let trois = Term.add_def trois_t "trois" in
+  Format.printf "%a\n" Term.print_def trois;
+  let neuf_t = Earley.parse_string Term.parse blank "trois trois" in
+  let neuf = Term.add_def neuf_t "neuf" in
+  Format.printf "%a\n" Term.print_def neuf;
+  let trois_t' = Earley.parse_string Term.parse blank "S (S (S 0))" in
+  let trois' = Term.add_def trois_t' "trois'" in
+  Format.printf "%a\n" Term.print_def trois'

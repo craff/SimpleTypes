@@ -1,0 +1,68 @@
+This is an example using Simply Type lambda-calculus
+(Church's style / Hindley Milner).
+
+The code tries to clean, very modular and was use in my type theory course.
+
+-------
+ROADMAP
+-------
+
+Module UnionFind.ml:
+
+  Implements Tarjan union find, supports for values attached to
+  equivalent classes, using a merge function on these value for union
+
+Module Type.ml
+
+  Implement simple types as a functor from atomic type. It supports
+  unification and also schema (generalisation and instanciation)
+
+Module Simple.ml (WORK IN PROGRESS)
+
+  Simply typed lambda terms as a function taking two modules:
+  - A module for type (intended to be produced by Type.Make)
+  - A module for a signature of constants to extend your terms
+
+File Test.ml
+
+  some test
+
+-------
+INSTALL
+-------
+
+This software uses
+
+OCaml together with
+- earley and earley-ocaml to write parser
+- bindlib to handle bound variables
+
+To install it:
+
+- install opam (probably a package of your linux distribution, look on the web)
+
+- if not done, choose an ocaml compiler, update opam package list:
+
+  opam update
+  opam switch 4.04.0     # earley support for 4.05.0 is not yet on opam
+
+- if you have nothing in your bash rc of you want to use the same shell, do
+  what the above command suggest:
+
+  eval `opam config env`
+
+- install the minimul configuration
+
+  opam install bindlib earley earley-ocaml ocamlbuild ocamlfind
+
+-----------
+COMPILATION
+-----------
+
+Now you should be able to compile this sofware:
+
+ocamlbuild -use-ocamlfind test.native
+
+and to clean up the sourceTree
+
+ocamlbuild -clean

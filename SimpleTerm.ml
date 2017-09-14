@@ -129,14 +129,11 @@ module Make(S:Signature) = struct
            Type.unif t typ
         | Var _ -> assert false
     in
-    Printf.eprintf "===> %b\n%!" (ty <> None);
     let ty = match ty with
       | None -> new_type ()
       | Some ty -> ty
     in
-    Format.eprintf "===> %a\n%!" Type.print ty;
     fn term ty;
-    Format.eprintf "===> %a\n%!" Type.print ty;
     Type.generalise ty
 
   (** Priority levels for printing and parsing *)

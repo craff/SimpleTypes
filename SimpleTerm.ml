@@ -1,16 +1,52 @@
-open Type
+open SimpleType
 open Bindlib
 
-module type Sig =
+module type Signature =
   sig
-    module T:Type
+    module Type:Type
     type cst
-    val typeOf : cst -> T.t
+    val typeOf : cst -> Type.t
     val print : Format.formatter -> cst -> unit
     val parse : cst Earley.grammar
   end
 
-module Make(Type:Type)(S:Sig with module T = Type) = struct
+module type Term = sig
+  module S:Signature
+  module Type:Type
+
+  type term =
+    | Cst of S.cst
+    | Lam of (term, term) binder
+    | App of (term * term)
+    | Def of definition
+
+    | Var of term var (** for printing only *)
+    | Typ of Type.t   (** for typing only *)
+  and definition =
+    { name : string
+    ; schema : (Type.t, Type.t) mbinder
+    ; value : term }
+
+  (** Smart constructor for bindlibs *)
+  val var : term var -> term
+
+  val lam : string -> (term bindbox -> term bindbox) -> term bindbox
+
+  val app : term bindbox -> term bindbox -> term bindbox
+
+  (** type inferrence *)
+  val infer : term -> Type.schema
+
+  (** Printing and parsing *)
+  val print : Format.formatter -> term -> unit
+
+  val parse : term Earley.grammar
+end
+
+module Make(S:Signature) = struct
+  module S = S
+  module Type = S.Type
+
   type term =
     | Cst of S.cst
     | Lam of (term, term) binder
@@ -25,7 +61,7 @@ module Make(Type:Type)(S:Sig with module T = Type) = struct
     ; value : term }
 
   let var : term var -> term =
-    fun _ -> failwith "Variable escaping its scope"
+    fun v -> Var v
 
   let lam : string -> (term bindbox -> term bindbox) -> term bindbox =
     fun name f ->
@@ -69,6 +105,35 @@ module Make(Type:Type)(S:Sig with module T = Type) = struct
     generalise ty
 
   type lvl = LvlAtom | LvlApp | LvlLam
+
+  let rec print_ids ff = function
+    | [] -> ()
+    | [v] -> Format.fprintf ff "%s" (name_of v)
+    | v::l -> Format.fprintf ff "%s %a" (name_of v) print_ids l
+
+  let rec print lvl ff term =
+    match term with
+    | Cst c -> S.print ff c
+    | Def d -> Format.fprintf ff "%s" d.name
+    | Var v -> Format.fprintf ff "%s" (name_of v)
+    | App(t,u) ->
+       let op, cl = if lvl < LvlApp then "(", ")" else "", "" in
+       Format.fprintf ff "%s%a %a%s" op (print LvlApp) t (print LvlAtom) u cl
+    | Lam(_) ->
+       let op, cl = if lvl < LvlLam then "(", ")" else "", "" in
+       let rec fn acc t = match t with
+           Lam(f) ->
+           let (v,t) = unbind var f in
+           fn (v::acc) t
+         | u ->
+            let ids = List.rev acc in
+            Format.fprintf ff "%sfun %a -> %a%s"
+                           op print_ids ids (print LvlLam) t cl
+       in
+       fn [] term
+    | Typ _ -> assert false
+
+  let print = print LvlLam
 
   exception Unbound of string
   let unbound v = raise (Unbound v)

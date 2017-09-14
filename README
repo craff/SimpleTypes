@@ -9,18 +9,18 @@ The code is not finished yet.
 ROADMAP
 -------
 
-Module UnionFind.ml:
+Module UnionFind.ml(i):
 
   Implements Tarjan union find, supports for values attached to
   equivalent classes, using a merge function on these values for union
 
-Module Type.ml
+Module SimpleType.ml(i)
 
   Implements simple types as a functor from atomic types. It supports
   unification and also schema (generalisation and instanciation).
   Schema uses bindlib's multiple binders.
 
-Module Simple.ml (WORK IN PROGRESS)
+Module SimpleTerm.ml(i) (WORK IN PROGRESS)
 
   Simply typed lambda-terms as a function taking two modules:
   - A module for type (intended to be produced by Type.Make)

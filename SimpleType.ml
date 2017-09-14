@@ -82,7 +82,7 @@ module Make(A:Atom) = struct
     fun ff t ->
       let open UnionFind in
       let gn mark unmark =
-        let rec fn wrap ff t =
+        let rec fn lvl ff t =
           let (t0, v) = find t in
           match mark t0 with
           | Above -> Format.fprintf ff "CYCLE"
@@ -92,7 +92,7 @@ module Make(A:Atom) = struct
                | Unknown name -> Format.fprintf ff "?%s" name
                | Known(Atom a) -> Format.fprintf ff "%a" A.print a
                | Known(Func(t1,t2)) ->
-                  let op, cl = if wrap = LvlAtom then "(", ")" else "", "" in
+                  let op, cl = if lvl = LvlAtom then "(", ")" else "", "" in
                   Format.fprintf ff "%s%a -> %a%s"
                                  op (fn LvlAtom) t1 (fn LvlFunc) t2 cl
              end;

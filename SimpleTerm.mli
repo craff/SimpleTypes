@@ -14,7 +14,7 @@ module type Signature =
 
 module type Term = sig
   module S:Signature
-  module Type = S.Type
+  module Type:Type
 
   type term =
     | Cst of S.cst
@@ -45,4 +45,4 @@ module type Term = sig
   val parse : term Earley.grammar
 end
 
-module Make(S:Signature) : Term with module S = S
+module Make(S:Signature) : Term with module S = S and module Type = S.Type

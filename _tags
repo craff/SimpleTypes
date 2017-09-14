@@ -1,0 +1,5 @@
+true        : -traverse
+true        : package(earley), package(earley.str), package(bindlib)
+"Type.ml"   : pp(pa_ocaml)
+"Simple.ml" : pp(pa_ocaml)
+"Test.ml"   : pp(pa_ocaml)

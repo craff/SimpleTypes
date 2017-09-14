@@ -23,9 +23,9 @@ Module Simple.ml (WORK IN PROGRESS)
   - A module for type (intended to be produced by Type.Make)
   - A module for a signature of constants to extend your terms
 
-File Test.ml
+File Test.ml (WORK IN PROGRESS)
 
-  some test
+  some tests
 
 -------
 INSTALL
@@ -59,10 +59,18 @@ To install it:
 COMPILATION
 -----------
 
-Now you should be able to compile this sofware:
+- Now you should be able to compile this sofware:
 
-ocamlbuild -use-ocamlfind test.native
+ocamlbuild -use-ocamlfind Test.native
+
+or
+
+make
 
 and to clean up the sourceTree
 
 ocamlbuild -clean
+
+or
+
+make clean

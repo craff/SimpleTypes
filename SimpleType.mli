@@ -1,3 +1,11 @@
+(** This module provide a functor SimpleType.Make to build simple types
+    from atomic type.
+
+    It provides their common functions (unification, printing,
+    parsing, ...).
+
+    It also provides schemas in the sense of ML polymorhism, with
+    generalisation and instanciation *)
 
 (** Signature for atomic type see type.mli.  We give a type for atomic
     type, their equality and printing and parsing function *)

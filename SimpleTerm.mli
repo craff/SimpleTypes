@@ -1,3 +1,10 @@
+(** This module provide a functor building types and function
+    for simply typed lambda calculus, it supports ML style polymorphism
+    for global definition.
+
+    It provides type-checking, convertibility, weak-head normal form
+    printing and parsing and extesion with global definitions *)
+
 open SimpleType
 open Bindlib
 
@@ -57,6 +64,9 @@ module type Term = sig
 
   (** Printing and parsing *)
   val print : Format.formatter -> t -> unit
+
+  (** Exception raised by parsing when an unbound variable is encounterd *)
+  exception Unbound of string
 
   val parse : t Earley.grammar
 

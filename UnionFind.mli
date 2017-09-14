@@ -1,5 +1,5 @@
-(** Implementation of union find, with union
-    supporting a call back *)
+(** Implementation of union find, with union supporting a call back
+    and support for linear time traversal. *)
 
 (** Type of a union find cell, the main type of this library.  The
     type parameter ['a] an optional information attached to each

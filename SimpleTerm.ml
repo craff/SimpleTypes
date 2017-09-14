@@ -47,6 +47,9 @@ module type Term = sig
   (** Printing and parsing *)
   val print : Format.formatter -> t -> unit
 
+  (** Exception raised by parsing when an unbound variable is encounterd *)
+  exception Unbound of string
+
   val parse : t Earley.grammar
 
   (** weak head normal form *)

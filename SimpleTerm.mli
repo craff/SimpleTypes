@@ -6,10 +6,11 @@ open Bindlib
 module type Signature =
   sig
     module Type:Type
-    type cst
-    val typeOf : cst -> Type.t
-    val print : Format.formatter -> cst -> unit
-    val parse : cst Earley.grammar
+    type t
+    val eq : t -> t -> bool
+    val print : Format.formatter -> t -> unit
+    val parse : t Earley.grammar
+    val typeOf : t -> Type.t
   end
 
 module type Term = sig
@@ -17,7 +18,7 @@ module type Term = sig
   module Type:Type
 
   type term =
-    | Cst of S.cst
+    | Cst of S.t
     | Lam of (term, term) binder
     | App of term * term
     | Def of definition
@@ -26,8 +27,9 @@ module type Term = sig
     | Typ of Type.t   (** for typing only *)
   and definition =
     { name : string
-    ; schema : (Type.t, Type.t) mbinder
+    ; schema : Type.schema
     ; value : term }
+  type t = term
 
   (** Smart constructor for bindlibs *)
   val var : term var -> term
@@ -36,13 +38,28 @@ module type Term = sig
 
   val app : term bindbox -> term bindbox -> term bindbox
 
-  (** type inferrence *)
-  val infer : term -> Type.schema
+  val def : definition -> term bindbox
+
+  (** type inferrence, of checking if the optional
+      argument is given *)
+  val infer : ?ty:Type.t -> term -> Type.schema
+
+  (** infer and instanciate *)
+  val typeOf : term -> Type.t
 
   (** Printing and parsing *)
   val print : Format.formatter -> term -> unit
 
   val parse : term Earley.grammar
+
+  (** weak head normal form *)
+  val whnf : term -> term
+
+  (** convertibility test *)
+  val eq : term -> term -> bool
+
+  (** Adding a definition, possibly with a type *)
+  val add_def : term -> ?ty:Type.t -> string -> unit
 end
 
 module Make(S:Signature) : Term with module S = S and module Type = S.Type

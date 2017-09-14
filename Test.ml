@@ -1,6 +1,8 @@
 open SimpleType
 open SimpleTerm
 
+(* Example: simply typed terms with natural numbers,
+   would require some form of rewriting to be usefull *)
 module Atom = struct
   type t = Nat
   let eq = (=)
@@ -15,7 +17,7 @@ open Type
 
 module Sig = struct
   module Type = Type
-  type cst = Zero | Succ
+  type t = Zero | Succ
   let typeOf = function
     | Zero -> atom Nat
     | Succ -> func (atom Nat) (atom Nat)
@@ -25,6 +27,7 @@ module Sig = struct
   let parser parse =
     | "0" -> Zero
     | "S" -> Succ
+  let eq = (=)
 end
 
 module Term = SimpleTerm.Make(Sig)

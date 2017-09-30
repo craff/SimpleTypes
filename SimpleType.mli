@@ -10,7 +10,11 @@
 (** Signature for atomic type see type.mli.  We give a type for atomic
     type, their equality and printing and parsing function *)
 module type Atom = sig
+  (** The ocaml type of atomic types *)
   type t
+
+  (** Equality, printing and parsing *)
+
   val eq : t -> t -> bool
   val print : Format.formatter -> t -> unit
   val parse : t Earley.grammar

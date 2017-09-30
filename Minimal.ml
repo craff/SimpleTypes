@@ -83,12 +83,11 @@ let main () =
     | Type.Cyclic t -> Format.eprintf "Cyclic type: %a\n%!" Type.print t
     | Type.Clash(t1,t2) -> assert false (* not possible here *)
     | Term.Unbound n -> Format.eprintf "Unbound variable %S\n%!" n
-    | Earley.Parse_error(buf,pos,msgs) ->
+    | Earley.Parse_error(buf,pos) ->
        let open Input in
        Printf.eprintf "File %S, line %d, character %d:\n%!"
                       (filename buf) (line_num buf) (utf8_col_num buf pos);
-       Printf.eprintf "Parse error:\n%!";
-       List.iter (Printf.eprintf " - %s\n%!") msgs
+       Printf.eprintf "Parse error:\n%!"
   done
 
 let _ = main ()
